@@ -21,4 +21,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::resource('residents', ResidentsController::class);
 Route::post('search/residents', [ResidentsController::class, "search"]);
-Route::get('search/residents/{order?}/{sort?}/{limit?}', [ResidentsController::class, "search"]);
+Route::get('search/residents', [ResidentsController::class, "search"]);
+Route::get('list/residents/{order?}/{sort?}/{limit?}', [ResidentsController::class, "list"]);

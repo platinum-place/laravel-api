@@ -135,42 +135,32 @@ class ResidentsController extends Controller
     public function destroy($id)
     {
         $data = Resident::find($id);
-        if ($data != null) {
-            $response = $this->jsonSuccessReturn(204);
-            $data->delete();
-        } else {
-            $response = $this->jsonFailReturn(401);
-        }
+        $response = $this->jsonSuccessReturn(204);
+        $data->delete();
         return response()->json($response, $response["status"]);
     }
 
-    public function search(Request $request, $order = "created_at", $sort =  "asc", $limit = 10)
+    public function search(Request $request)
     {
-        $data = new Resident;
+        $response = $this->jsonSuccessReturn(200);
 
-        if (!in_array($order, $data->getTableColumns())) {
+        $response["data"] = Resident::where('id', 'like', "%{$request->search}%")
+            ->orWhere('Nombre', 'like', "%{$request->search}%")
+            ->orWhere('Correo', 'like', "%{$request->search}%")
+            ->get();
+
+        return response()->json($response, $response["status"]);
+    }
+
+    public function list($order = "created_at", $sort =  "asc", $limit = 10)
+    {
+        try {
+            $response = $this->jsonSuccessReturn(200);
+            $response["data"] = Resident::orderBy($order, $sort)->paginate($limit);
+            return response()->json($response, $response["status"]);
+        } catch (\Throwable $th) {
             $response = $this->jsonFailReturn(402);
             return response()->json($response, $response["status"]);
         }
-
-        if (!in_array($sort, ["desc", "asc"])) {
-            $response = $this->jsonFailReturn(403);
-            return response()->json($response, $response["status"]);
-        }
-
-        if (!is_numeric($limit)) {
-            $response = $this->jsonFailReturn(404);
-            return response()->json($response, $response["status"]);
-        }
-
-        $data = Resident::orderBy($order, $sort);
-        if ($request->has("search")) {
-            $data->where('id', 'like', "%{$request->search}%")
-                ->orWhere('Nombre', 'like', "%{$request->search}%")
-                ->orWhere('Correo', 'like', "%{$request->search}%");
-        }
-        $response = $this->jsonSuccessReturn(200);
-        $response["data"] =$data->paginate($limit);
-        return response()->json($response, $response["status"]);
     }
 }
