@@ -18,7 +18,7 @@ class ResidentsController extends Controller
     public function index()
     {
         $residents = Resident::all();
-        return response()->json(["data" => $residents]);
+        return response()->json(['success' => true, "data" => $residents]);
     }
 
     /**
@@ -128,5 +128,21 @@ class ResidentsController extends Controller
     {
         Resident::find($id)->delete();
         return response()->json(['success' => true, "message" => "Residente eliminado"]);
+    }
+
+    public function search(Request $request)
+    {
+        $residents = Resident::where('id', 'like', "%{$request->Search}%")
+            ->orWhere('Nombre', 'like', "%{$request->Search}%")
+            ->orWhere('Correo', 'like', "%{$request->Search}%")
+            ->get();
+
+        return response()->json(['success' => true, "data" => $residents]);
+    }
+
+    public function list($order, $sort)
+    {
+        $residents = Resident::select("Nombre", "Edad")->orderBy($order, $sort)->get();
+        return response()->json(['success' => true, "data" => $residents]);
     }
 }
