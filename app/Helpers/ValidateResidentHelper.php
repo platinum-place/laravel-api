@@ -17,7 +17,7 @@ trait ValidateResidentHelper
             'Edad' => 'required|numeric',
             'Direccion' => 'required',
             'Comida_Entregada' => 'required|boolean',
-            'Observacion' => 'required',
+            //'Observacion' => 'required',
         ];
     }
 
@@ -34,7 +34,7 @@ trait ValidateResidentHelper
             'Edad.numeric' => 'Solo acepta números',
             'Direccion.required' => 'El campo es obligatorio',
             'Comida_Entregada.required' => 'El campo es obligatorio',
-            'Comida_Entregada.boolean' => 'Solo puede ser true o false',
+            'Comida_Entregada.boolean' => "Solo puede ser 'true' o 'false'",
             'Observacion.required' => 'El campo es obligatorio',
         ];
     }

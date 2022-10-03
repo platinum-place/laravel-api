@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\JsonReturnHelper;
 use App\Helpers\ValidateResidentHelper;
 use App\Models\Resident;
 use Illuminate\Http\Request;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ResidentsController extends Controller
 {
-    use ValidateResidentHelper;
+    use ValidateResidentHelper, JsonReturnHelper;
     /**
      * Display a listing of the resource.
      *
@@ -17,8 +18,9 @@ class ResidentsController extends Controller
      */
     public function index()
     {
-        $residents = Resident::all();
-        return response()->json(['success' => true, "data" => $residents]);
+        $response = $this->jsonSuccessReturn(200);
+        $response["data"] = Resident::all();
+        return response()->json($response, $response["status"]);
     }
 
     /**
@@ -41,25 +43,22 @@ class ResidentsController extends Controller
     {
         $validator = Validator::make($request->all(), $this->rules(), $this->messages());
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'data' => $validator->errors()
+            $response = $this->jsonFailReturn(400);
+            $response["data"] = $validator->errors();
+        } else {
+            $response = $this->jsonSuccessReturn(201);
+            $response["data"] = Resident::create([
+                "Nombre" => $request->Nombre,
+                "Apellidos" => $request->Apellidos,
+                "Telefono" => $request->Telefono,
+                "Correo" => $request->Correo,
+                "Edad" => $request->Edad,
+                "Direccion" => $request->Direccion,
+                "Comida_Entregada" => $request->Comida_Entregada,
+                "Observacion" => $request->Observacion,
             ]);
         }
-
-        $resident = Resident::create([
-            "Nombre" => $request->Nombre,
-            "Apellidos" => $request->Apellidos,
-            "Telefono" => $request->Telefono,
-            "Correo" => $request->Correo,
-            "Edad" => $request->Edad,
-            "Direccion" => $request->Direccion,
-            "Comida_Entregada" => $request->Comida_Entregada,
-            "Observacion" => $request->Observacion,
-        ]);
-
-        return response()->json(['success' => true, "data" => $resident]);
+        return response()->json($response, $response["status"]);
     }
 
     /**
@@ -70,8 +69,15 @@ class ResidentsController extends Controller
      */
     public function show($id)
     {
-        $resident = Resident::find($id);
-        return response()->json(['success' => true, "data" => $resident]);
+        $data = Resident::find($id);
+        if ($data != null) {
+            $response = $this->jsonSuccessReturn(202);
+        } else {
+            $response = $this->jsonFailReturn(401);
+        }
+
+        $response["data"] = $data;
+        return response()->json($response, $response["status"]);
     }
 
     /**
@@ -96,26 +102,28 @@ class ResidentsController extends Controller
     {
         $validator = Validator::make($request->all(), $this->rules(), $this->messages());
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'data' => $validator->errors()
-            ]);
+            $response = $this->jsonFailReturn(400);
+            $data = $validator->errors();
+        } else {
+            $data = Resident::find($id);
+            if ($data != null) {
+                $response = $this->jsonSuccessReturn(203);
+                $data->update([
+                    "Nombre" => $request->Nombre,
+                    "Apellidos" => $request->Apellidos,
+                    "Telefono" => $request->Telefono,
+                    "Correo" => $request->Correo,
+                    "Edad" => $request->Edad,
+                    "Direccion" => $request->Direccion,
+                    "Comida_Entregada" => $request->Comida_Entregada,
+                    "Observacion" => $request->Observacion,
+                ]);
+            } else {
+                $response = $this->jsonFailReturn(401);
+            }
         }
-
-        $resident = Resident::find($id);
-        $resident->update([
-            "Nombre" => $request->Nombre,
-            "Apellidos" => $request->Apellidos,
-            "Telefono" => $request->Telefono,
-            "Correo" => $request->Correo,
-            "Edad" => $request->Edad,
-            "Direccion" => $request->Direccion,
-            "Comida_Entregada" => $request->Comida_Entregada,
-            "Observacion" => $request->Observacion,
-        ]);
-
-        return response()->json(['success' => true, "data" => $resident]);
+        $response["data"] = $data;
+        return response()->json($response, $response["status"]);
     }
 
     /**
@@ -126,23 +134,43 @@ class ResidentsController extends Controller
      */
     public function destroy($id)
     {
-        Resident::find($id)->delete();
-        return response()->json(['success' => true, "message" => "Residente eliminado"]);
+        $data = Resident::find($id);
+        if ($data != null) {
+            $response = $this->jsonSuccessReturn(204);
+            $data->delete();
+        } else {
+            $response = $this->jsonFailReturn(401);
+        }
+        return response()->json($response, $response["status"]);
     }
 
-    public function search(Request $request)
+    public function search(Request $request, $order = "created_at", $sort =  "asc", $limit = 10)
     {
-        $residents = Resident::where('id', 'like', "%{$request->Search}%")
-            ->orWhere('Nombre', 'like', "%{$request->Search}%")
-            ->orWhere('Correo', 'like', "%{$request->Search}%")
-            ->get();
+        $data = new Resident;
 
-        return response()->json(['success' => true, "data" => $residents]);
-    }
+        if (!in_array($order, $data->getTableColumns())) {
+            $response = $this->jsonFailReturn(402);
+            return response()->json($response, $response["status"]);
+        }
 
-    public function list($order, $sort)
-    {
-        $residents = Resident::select("Nombre", "Edad")->orderBy($order, $sort)->get();
-        return response()->json(['success' => true, "data" => $residents]);
+        if (!in_array($sort, ["desc", "asc"])) {
+            $response = $this->jsonFailReturn(403);
+            return response()->json($response, $response["status"]);
+        }
+
+        if (!is_numeric($limit)) {
+            $response = $this->jsonFailReturn(404);
+            return response()->json($response, $response["status"]);
+        }
+
+        $data = Resident::orderBy($order, $sort);
+        if ($request->has("search")) {
+            $data->where('id', 'like', "%{$request->search}%")
+                ->orWhere('Nombre', 'like', "%{$request->search}%")
+                ->orWhere('Correo', 'like', "%{$request->search}%");
+        }
+        $response = $this->jsonSuccessReturn(200);
+        $response["data"] =$data->paginate($limit);
+        return response()->json($response, $response["status"]);
     }
 }

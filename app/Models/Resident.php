@@ -19,4 +19,8 @@ class Resident extends Model
         'Comida_Entregada',
         'Observacion',
     ];
+
+    public function getTableColumns() {
+        return $this->getConnection()->getSchemaBuilder()->getColumnListing($this->getTable());
+    }
 }
