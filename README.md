@@ -20,12 +20,12 @@ The file explorer is accessible using the button in left corner of the navigatio
 1. Dentro de la carpeta del proyecto, abrir terminal y ejecutar el comando "composer install" para descargar los paquetes de laravel.
 2. Configurar las variables de entorno (.env) y colocar las credenciales del motor de base de datos. Ejemplo de variables con mysql:
 
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=example_app
-DB_USERNAME=root
-DB_PASSWORD=
+    -DB_CONNECTION=mysql
+    -DB_HOST=127.0.0.1
+    -DB_PORT=3306
+    -DB_DATABASE=example_app
+    -DB_USERNAME=root
+    -DB_PASSWORD=
 
 3. En la misma consola, ejecutar el comando "php artisan migrate" para crear las tablas del proyecto y una base de datos aparte para el mismo.
 4. Por último, en la misma consola, ejecutar "php artisan serve" para iniciar el proyecto. A partir de aquí, puede acceder a las rutas y ver los resultados.
